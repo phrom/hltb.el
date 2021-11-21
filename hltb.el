@@ -2,6 +2,7 @@
 ;;
 ;; Copyright (C) 2021 Pedro Henrique Romano
 ;;
+;;
 ;; Author: Pedro Henrique Romano <https://github.com/phr>
 ;; Maintainer: Pedro Henrique Romano <mail@pedroromano.org>
 ;; Created: November 19, 2021
@@ -30,12 +31,13 @@
   id title img main main+extra completionist)
 
 (defun hltb-parse-time (time)
-  (let ((number (string-to-number time))
-        (half (string-match-p "½" time))
-        (hour-p (string-match-p "Hour" time)))
-    (if hour-p
-        (+ (* 60 number) (if half 30 0))
-      number)))
+  (let* ((number (string-to-number time))
+         (half (string-match-p "½" time))
+         (hour-p (string-match-p "Hour" time))
+         (result (if hour-p
+                     (+ (* 60 number) (if half 30 0))
+                   number)))
+    (when (> result 0) result)))
 
 (defun hltb-search (name)
   (let* ((response (hltb-url-retrieve-post "https://howlongtobeat.com/search_results?page=1"
@@ -61,10 +63,47 @@
           (cl-find-if (lambda (x) (string-equal (hltb-entry-title x) chosen)) candidates))
       (car candidates))))
 
-;(setq result (hltb-search "Railway Empire"))
-;(setq result (hltb-search "A Bird Story"))
+(ert-deftest single-result-test ()
+  (let ((result (hltb-search "Railway Empire")))
+    (should (equal result
+                   (make-hltb-entry :title "Railway Empire"
+                                    :img "https://howlongtobeat.com/games/52962_Railway_Empire.jpg"
+                                    :id 52962
+                                    :main 1170
+                                    :main+extra 2790
+                                    :completionist 7140)))))
+
+(ert-deftest multiple-results-test ()
+  (cl-flet* ((completing-read (_prompt _candidates) "Fallout 2")
+             (result (hltb-search "Bird Story")))
+    (should (equal result
+                   (make-hltb-entry :title "Fallout 2"
+                                    :img "https://howlongtobeat.com/games/250px-PC_Game_Fallout_2.jpg"
+                                    :id 3339
+                                    :main 1830
+                                    :main+extra 2880
+                                    :completionist 4890)))))
+
+(ert-deftest solo-time-test ()
+  (let ((result (hltb-search "Bird Story")))
+    (should (equal result
+                   (make-hltb-entry :title "A Bird Story"
+                                    :img "https://howlongtobeat.com/games/ABirdStory_header.jpg"
+                                    :id 22526
+                                    :main 90)))))
+
+(ert-deftest time-in-minutes-test ()
+  (let ((result (hltb-search "Stanley Parable Demo")))
+    (should (equal result
+                   (make-hltb-entry :title "The Stanley Parable Demo"
+                                    :img "https://howlongtobeat.com/games/TheStanleyParable.png"
+                                    :id 14118
+                                    :main 28
+                                    :main+extra 38
+                                    :completionist 50)))))
+
+
 ;(setq result (hltb-search "Stanley Parable Demo"))
-;(setq result (hltb-search "Fallout"))
 ;(hltb-entry-main result)
 
 (provide 'hltb)
