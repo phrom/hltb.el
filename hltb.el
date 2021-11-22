@@ -78,7 +78,7 @@
              (result (hltb-search "Bird Story")))
     (should (equal result
                    (make-hltb-entry :title "Fallout 2"
-                                    :img "https://howlongtobeat.com/games/250px-PC_Game_Fallout_2.jpg"
+                                    :img "https://hgwlongtobeat.com/games/250px-PC_Game_Fallout_2.jpg"
                                     :id 3339
                                     :main 1830
                                     :main+extra 2880
@@ -101,10 +101,6 @@
                                     :main 28
                                     :main+extra 38
                                     :completionist 50)))))
-
-
-;(setq result (hltb-search "Stanley Parable Demo"))
-;(hltb-entry-main result)
 
 (provide 'hltb)
 ;;; hltb.el ends here
