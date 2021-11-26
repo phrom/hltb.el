@@ -50,13 +50,13 @@
         (org-roam-capture- :node node)
         (hltb-org-roam-find-id title)))))
 
+(defun hltb-org-make-link (title)
+  (let ((id (hltb-org-roam-id-get-create title)))
+    (format "[[id:%s][%s]]" id title)))
+
 (defun hltb-org-make-link-list (l suffix)
   (string-join
-   (mapcar (lambda (x)
-             (let* ((title (concat x " " suffix))
-                    (id (hltb-org-roam-id-get-create title)))
-               (format "[[id:%s][%s]]" id title)))
-           l)
+   (mapcar (lambda (x) (hltb-org-make-link (concat x " " suffix))) l)
    ", "))
 
 (defun hltb-org-maybe-set-time (game accessor property)
@@ -74,9 +74,7 @@
 
 (defun hltb-org-insert-drawer (drawer)
   (if-let ((found (search-forward (format ":%s:" drawer) nil t)))
-      (progn
-        (backward-char 6)
-        found)
+      (beginning-of-line)
     (goto-char (plist-get (cadr (org-element-at-point)) :end))
     (insert ":HLTB:\n:END:\n")
     (previous-line 2)))
@@ -104,8 +102,31 @@
       (goto-char end)
       (beginning-of-line)
       (open-line 1)
-      (insert (format ":%s: %s" key value))
-      (goto-char p))))
+      (insert (format ":%s: %s" key value)))
+    (goto-char p)))
+
+(defun hltb-org-convert-date (date)
+  (let ((month-day (split-string (car date) " ")))
+    (format "%s-%s-%s"
+            (cadr date)
+            (pcase (car month-day)
+              ("January" "01")
+              ("February" "02")
+              ("March" "03")
+              ("April" "04")
+              ("May" "05")
+              ("June" "06")
+              ("July" "07")
+              ("August" "08")
+              ("September" "09")
+              ("October" "10")
+              ("November" "11")
+              ("December" "12"))
+            (cadr month-day))))
+
+(defun hltb-org-set-release-date (game prop name)
+  (when-let ((release-date (alist-get prop (hltb-game-release-date game))))
+    (hltb-org-set-drawer-entry name (hltb-org-make-link (hltb-org-convert-date release-date)))))
 
 (defun hltb-org-fill-properties ()
   (interactive)
@@ -126,9 +147,11 @@
         (hltb-org-maybe-set-time game #'hltb-game-completionist "COMPLETIONIST")
         (hltb-org-set-drawer-entry "GENRE" (hltb-org-make-link-list (hltb-game-genre game) "(Game Genre)"))
         (hltb-org-set-drawer-entry "PUBLISHER" (hltb-org-make-link-list (hltb-game-publisher game) "(Game Publisher)"))
-        (hltb-org-set-drawer-entry "DEVELOPER" (hltb-org-make-link-list (hltb-game-developer game) "(Game Developer)")))
+        (hltb-org-set-drawer-entry "DEVELOPER" (hltb-org-make-link-list (hltb-game-developer game) "(Game Developer)"))
+        (hltb-org-set-release-date game 'na "RELEASE-DATE-NA")
+        (hltb-org-set-release-date game 'eu "RELEASE-DATE-EU")
+        (hltb-org-set-release-date game 'jp "RELEASE-DATE-JP"))
       (hltb-org-add-cover game))))
-      ; release-date
 
 (provide 'hltb-org)
 ;;; hltb-org.el ends here
