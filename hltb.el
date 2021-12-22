@@ -53,8 +53,8 @@
   (let* ((response (hltb-url-retrieve-post "https://howlongtobeat.com/search_results?page=1"
                                            (format "queryString=%s&t=games&sorthead=popular&sortd=0&plat=&length_type=main&length_min=&length_max=&v=&f=&g=&detail=&randomize=0" name)))
          (number-found (caddar (dom-by-tag response 'h3)))
-         (number-found (when (string-match "We Found \\([0-9]+\\) Games" number-found)
-                         (string-to-number (match-string 1 number-found))))
+         (_ (when (string-match "We Found \\([0-9]+\\) Games" number-found)
+              (string-to-number (match-string 1 number-found))))
          (candidates (mapcar (lambda (li)
                                (let* ((a (car (dom-by-tag li 'a)))
                                       (href (dom-attr a 'href))
@@ -187,7 +187,7 @@
       (beginning-of-line)
     (goto-char (plist-get (cadr (org-element-at-point)) :end))
     (insert ":HLTB:\n:END:\n")
-    (previous-line 2)))
+    (forward-line -2)))
 
 (defun hltb-org-delete-line ()
   (interactive)
